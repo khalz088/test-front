@@ -1,14 +1,15 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 export default function mkaka() {
   const [name, setName] = useState("");
   const [file, setFile] = useState(null);
   const [error, setError] = useState({ name: "", file: "" });
+  const [users, setUsers] = useState([]);
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
     if (selectedFile) {
-      // File validation (image type and size)
+      //  validation
       const validImageTypes = [
         "image/jpeg",
         "image/png",
@@ -27,7 +28,7 @@ export default function mkaka() {
         return;
       }
 
-      // Convert to Base64
+      //  Base64
       const reader = new FileReader();
       reader.onloadend = () => {
         setFile(reader.result); // Base64 string of the image
@@ -80,27 +81,75 @@ export default function mkaka() {
       }
 
       const responseData = await response.json();
-      console.log(responseData);
     } catch (error) {
       console.error("Error:", error);
     }
   };
 
+  const fetchUsers = async () => {
+    try {
+      const res = await fetch("http://localhost:8001/users");
+      if (!res.ok) throw new Error("Failed to fetch users");
+      const data = await res.json();
+      setUsers(data);
+    } catch (error) {
+      console.error("Fetch Error:", error);
+    }
+  };
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      fetchUsers();
+    }, 1000);
+    return () => clearInterval(intervalId);
+  }, []);
+
   return (
     <div>
       <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-        {error.name && <p style={{ color: "red" }}>{error.name}</p>}
-        <br />
-        <input type="file" onChange={handleFileChange} />
-        {error.file && <p style={{ color: "red" }}>{error.file}</p>}
-        <br />
+        <div style={{ marginBottom: "10px" }}>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+          {error.name && <p style={{ color: "red" }}>{error.name}</p>}
+        </div>
+
+        <div style={{ marginBottom: "10px" }}>
+          <input type="file" onChange={handleFileChange} />
+          {error.file && <p style={{ color: "red" }}>{error.file}</p>}
+        </div>
+
         <button type="submit">Submit</button>
       </form>
+      <h2>Users List</h2>
+      <table border="1">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Banner</th>
+          </tr>
+        </thead>
+        <tbody>
+          {users.map((user, index) => (
+            <tr key={index}>
+              <td>{index + 1}</td>
+              <td>{user.name}</td>
+              <td>
+                {user.banner && (
+                  <img
+                    src={"http://localhost:8001" + user.banner}
+                    alt="User Banner"
+                    width="100"
+                  />
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
