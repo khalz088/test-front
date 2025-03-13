@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 
-export default function testing() {
+export default function Mkaka() {
   const [name, setName] = useState("");
   const [file, setFile] = useState(null);
   const [error, setError] = useState({ name: "", file: "" });
