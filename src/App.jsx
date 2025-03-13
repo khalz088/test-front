@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 
-export default function mkaka() {
+export default function testing() {
   const [name, setName] = useState("");
   const [file, setFile] = useState(null);
   const [error, setError] = useState({ name: "", file: "" });
@@ -9,7 +9,7 @@ export default function mkaka() {
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
     if (selectedFile) {
-      //  validation
+      //  Validation
       const validImageTypes = [
         "image/jpeg",
         "image/png",
@@ -28,24 +28,21 @@ export default function mkaka() {
         return;
       }
 
-      //  Base64
+      // Convert to Base64
       const reader = new FileReader();
       reader.onloadend = () => {
-        setFile(reader.result); // Base64 string of the image
+        setFile(reader.result); // Base64 string
       };
-      reader.readAsDataURL(selectedFile); // Convert file to Base64
+      reader.readAsDataURL(selectedFile);
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Reset errors
     setError({ name: "", file: "" });
-
     let formIsValid = true;
 
-    // Validation
     if (!name) {
       setError((prevError) => ({ ...prevError, name: "Name is required." }));
       formIsValid = false;
@@ -56,31 +53,21 @@ export default function mkaka() {
       formIsValid = false;
     }
 
-    if (!formIsValid) {
-      return; // Prevent form submission if validation fails
-    }
+    if (!formIsValid) return;
 
-    const data = {
-      name,
-      banner: file, // Base64 string of the image
-    };
+    const data = { name, banner: file };
 
     try {
       const response = await fetch("http://localhost:8001/upload", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
 
-      console.log(response);
+      if (!response.ok) throw new Error("Failed to upload image");
 
-      if (!response.ok) {
-        throw new Error("Failed to upload image");
-      }
-
-      const responseData = await response.json();
+      await response.json();
+      fetchUsers(); // Refresh list after upload
     } catch (error) {
       console.error("Error:", error);
     }
@@ -97,11 +84,22 @@ export default function mkaka() {
     }
   };
 
+  const handleDelete = async (id) => {
+    try {
+      const res = await fetch(`http://localhost:8001/delete/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) throw new Error("Failed to delete user");
+
+      fetchUsers(); // Refresh list after deletion
+    } catch (error) {
+      console.error("Delete Error:", error);
+    }
+  };
+
   useEffect(() => {
-    const intervalId = setInterval(() => {
-      fetchUsers();
-    }, 1000);
-    return () => clearInterval(intervalId);
+    fetchUsers();
   }, []);
 
   return (
@@ -110,6 +108,7 @@ export default function mkaka() {
         <div style={{ marginBottom: "10px" }}>
           <input
             type="text"
+            placeholder="Enter Name"
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
@@ -123,6 +122,7 @@ export default function mkaka() {
 
         <button type="submit">Submit</button>
       </form>
+
       <h2>Users List</h2>
       <table border="1">
         <thead>
@@ -130,21 +130,30 @@ export default function mkaka() {
             <th>ID</th>
             <th>Name</th>
             <th>Banner</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody>
           {users.map((user, index) => (
-            <tr key={index}>
+            <tr key={user.id}>
               <td>{index + 1}</td>
               <td>{user.name}</td>
               <td>
                 {user.banner && (
                   <img
-                    src={"http://localhost:8001" + user.banner}
+                    src={`http://localhost:8001${user.banner}`}
                     alt="User Banner"
                     width="100"
                   />
                 )}
+              </td>
+              <td>
+                <button
+                  style={{ color: "red" }}
+                  onClick={() => handleDelete(user.id)}
+                >
+                  Delete
+                </button>
               </td>
             </tr>
           ))}
