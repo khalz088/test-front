@@ -46,6 +46,7 @@ export default function Mkaka() {
       formIsValid = false;
     }
     if (!formIsValid) return;
+    
     const data = { name, banner: file };
     try {
       const response = await fetch("http://localhost:8001/upload", {
